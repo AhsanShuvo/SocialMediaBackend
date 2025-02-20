@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SocialMediaBackend.API.Interfaces;
 using SocialMediaBackend.API.Models;
+using SocialMediaBackend.API.Models.Requests;
 
 namespace SocialMediaBackend.API.Controllers.V1
 {
@@ -18,10 +20,20 @@ namespace SocialMediaBackend.API.Controllers.V1
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateComment([FromBody] Comment comment)
+        [ProducesResponseType(typeof(CommentRequest), StatusCodes.Status201Created)]
+        [Authorize]
+        [Route("create")]
+        public async Task<IActionResult> CreateComment([FromBody] CommentRequest comment)
         {
-            await _commentService.CreateCommentAsync(comment);
-            return Ok(new { message = "Comment added successfully." });
+            var result = await _commentService.CreateCommentAsync(comment);
+
+            var response = new
+            {
+                Success = result,
+                Message = result == true ? "Comment added successfully" : "Failed to add comment"
+            };
+
+            return Ok(response);
         }
     }
 }

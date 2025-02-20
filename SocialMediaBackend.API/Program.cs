@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using SocialMediaBackend.API.BackgroundServices;
 using SocialMediaBackend.API.Data;
 using SocialMediaBackend.API.Extensions;
 using SocialMediaBackend.API.Interfaces;
@@ -27,12 +26,17 @@ namespace SocialMediaBackend.API
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
+            
+            builder.Services.Configure<RouteOptions>(options =>
+            {
+                options.LowercaseUrls = true;
+            });
 
-            services.AddHostedService<CommentConsumer>();
-            services.AddHostedService<ImageProcessingService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAuthService, AuthService>();
-            services.AddScoped<JwtService>();
+            services.AddScoped<IJwtService, JwtService>();
+            services.AddScoped<IPostService, PostService>();
+            services.AddScoped<ICommentService, CommentService>();
 
             services.AddControllers();
             services.AddEndpointsApiExplorer();

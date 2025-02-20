@@ -8,11 +8,15 @@ namespace SocialMediaBackend.API.Services
     {
         private readonly ILogger<UserService> _logger;
         private readonly AppDbContext _context;
+        private readonly ICacheService _cacheService;
+        private readonly IImageStorageService _imageStorageService;
 
-        public UserService(ILogger<UserService> logger, AppDbContext context)
+        public UserService(ILogger<UserService> logger, AppDbContext context, ICacheService cacheService, IImageStorageService imageStorageService)
         {
             _logger = logger;
             _context = context;
+            _cacheService = cacheService;
+            _imageStorageService = imageStorageService;
         }
 
         public async Task<bool> DeleteUserAndAllDataAsync(Guid userId)
@@ -20,6 +24,12 @@ namespace SocialMediaBackend.API.Services
             try
             {
                 _logger.LogInformation("Deleting user with all assciociated posts and comments for userId: {userId}", userId);
+
+                var images = await _context.Posts
+                    .AsNoTracking()
+                    .Where(p => p.CreatorId == userId)
+                    .Select(p => p.ImageUrl)
+                    .ToListAsync();
 
                 var user = await _context.Accounts
                     .Include(a => a.Posts).Include(a => a.Comments).FirstOrDefaultAsync(a => a.Id == userId);
@@ -32,6 +42,10 @@ namespace SocialMediaBackend.API.Services
 
                 _context.Accounts.Remove(user);
                 await _context.SaveChangesAsync();
+
+                await Task.WhenAll(images.Select(image => _imageStorageService.DeleteBlobImagesAsync(image)));
+
+                await _cacheService.RemoveAsync("posts:");
 
                 _logger.LogInformation("Successfully deleted user with userId: {userId}", userId);
 

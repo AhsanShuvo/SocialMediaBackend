@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using SocialMediaBackend.API.Interfaces;
+using SocialMediaBackend.API.Models;
 using SocialMediaBackend.API.Settings;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -7,7 +9,7 @@ using System.Text;
 
 namespace SocialMediaBackend.API.Services
 {
-    public class JwtService
+    public class JwtService : IJwtService 
     {
         private readonly JwtSettings _jwtSettings;
 
@@ -16,7 +18,7 @@ namespace SocialMediaBackend.API.Services
             _jwtSettings = jwtSettings.Value;
         }
 
-        public string GenerateToken(Guid userId, string name)
+        public TokenData GenerateToken(Guid userId, string name)
         {
             var claims = new[]
             {
@@ -32,11 +34,11 @@ namespace SocialMediaBackend.API.Services
                 _jwtSettings.Issuer,
                 _jwtSettings.Audience,
                 claims,
-                expires: DateTime.UtcNow.AddHours(2),
+                expires: DateTime.UtcNow.AddSeconds(_jwtSettings.TokenExpiresInSeconds),
                 signingCredentials: credentials
             );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return new TokenData(new JwtSecurityTokenHandler().WriteToken(token), _jwtSettings.TokenExpiresInSeconds);
         }
     }
 }

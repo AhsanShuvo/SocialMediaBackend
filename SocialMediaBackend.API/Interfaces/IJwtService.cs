@@ -2,8 +2,8 @@
 
 namespace SocialMediaBackend.API.Interfaces
 {
-    public interface IAuthService
+    public interface IJwtService
     {
-        Task<TokenResponse> AuthenticateAsync(Guid userId);
+        TokenData GenerateToken(Guid userId, string name);
     }
 }

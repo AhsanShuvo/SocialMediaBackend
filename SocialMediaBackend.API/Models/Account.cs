@@ -6,7 +6,6 @@ namespace SocialMediaBackend.API.Models
     public class Account
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Id { get; set; }
 
         [Required]

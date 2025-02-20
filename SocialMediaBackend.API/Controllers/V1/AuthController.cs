@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SocialMediaBackend.API.Interfaces;
+using SocialMediaBackend.API.Models;
 using SocialMediaBackend.API.Models.Requests;
-using SocialMediaBackend.API.Services;
 
 namespace SocialMediaBackend.API.Controllers.V1
 {
@@ -18,18 +18,13 @@ namespace SocialMediaBackend.API.Controllers.V1
             _logger = logger;
         }
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        [HttpPost("token")]
+        [ProducesResponseType(typeof(TokenResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetToken([FromBody] TokenRequest request)
         {
-            var token = await _authService.AuthenticateAsync(request.UserId);
-            if (token == null)
-            {
-                _logger.LogWarning("Authentication failed. Invalid user Id: {userId}.", request.UserId);
-                return Unauthorized(new { message = "Invalid user Id." });
-            }
-            _logger.LogInformation("Authentication successful for user: {name}", request.Name);
-
-            return Ok(new { token });
+            var tokenResponse = await _authService.AuthenticateAsync(request.UserId);
+            return Ok(tokenResponse);
         }
     }
 }

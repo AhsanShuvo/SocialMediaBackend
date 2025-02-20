@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using SocialMediaBackend.API.Interfaces;
 using SocialMediaBackend.API.Models;
 using SocialMediaBackend.API.Services;
+using System.Diagnostics;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace SocialMediaBackend.API.Controllers.V1
 {
@@ -11,10 +13,10 @@ namespace SocialMediaBackend.API.Controllers.V1
     public class PostsController : ControllerBase
     {
         private readonly ILogger<PostsController> _logger;
-        private readonly BlobStorageService _blobStorageService;
+        private readonly IImageStorageService _blobStorageService;
         private readonly IPostService _postService;
 
-        public PostsController(ILogger<PostsController> logger, BlobStorageService blobStorageService, IPostService postService)
+        public PostsController(ILogger<PostsController> logger, IImageStorageService blobStorageService, IPostService postService)
         {
             _logger = logger;
             _blobStorageService = blobStorageService;
@@ -22,33 +24,42 @@ namespace SocialMediaBackend.API.Controllers.V1
         }
 
         [HttpGet]
+        [ProducesResponseType(typeof(List<PaginatedPostResponse>), StatusCodes.Status200OK)]
+        [Authorize]
         public async Task<IActionResult> GetAllPosts([FromQuery] int limit = 10, [FromQuery] string? cursor = null)
         {
+           var stopwatch = Stopwatch.StartNew();
            var posts = await _postService.GetAllPostsAsync(limit, cursor);
-           return Ok(posts);
+            stopwatch.Stop();
+            _logger.LogInformation("Elapsed time: {TotalMilliseconds} ms", stopwatch.Elapsed.TotalMilliseconds);
+            return Ok(posts);
         }
 
         [HttpPost]
+        [Route("create")]
         [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> CreatePostAsync(CreatePostRequest request)
         {
-            var userId = Guid.Parse(User.FindFirst("sub")?.Value ?? "");
+            var userId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? "");
             
             if(userId != request.CreatorId)
             {
                 return Unauthorized("Unauthorized Creator Id");
             }
 
-            var post = await _postService.CreatePostAsync(request);
-            return Created("", post);
+            await _postService.CreatePostAsync(request);
+            return Ok(new { message = "post was created successfully."});
         }
 
         [HttpGet("upload-url")]
         [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public IActionResult GetUploadUrl([FromQuery] string fileName)
         {
-            var uploadUrl = _blobStorageService.GenerateUploadUrl(fileName);
-            return Ok(new { uploadUrl });
+            var uploadUrlResponse = _blobStorageService.GenerateUploadUrl(fileName);
+
+            return Ok(new { uploadUrlResponse });
         }
     }
 }

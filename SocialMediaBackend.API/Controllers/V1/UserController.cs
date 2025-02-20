@@ -5,7 +5,7 @@ using SocialMediaBackend.API.Interfaces;
 namespace SocialMediaBackend.API.Controllers.V1
 {
     [ApiController]
-    [Route("api/v1/{controller}")]
+    [Route("api/v1/[controller]")]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;

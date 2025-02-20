@@ -6,6 +6,7 @@ using SocialMediaBackend.API.Interfaces;
 using SocialMediaBackend.API.Services;
 using SocialMediaBackend.API.Settings;
 using StackExchange.Redis;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
 namespace SocialMediaBackend.API.Extensions
@@ -39,14 +40,15 @@ namespace SocialMediaBackend.API.Extensions
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
+                    options.MapInboundClaims = false;
+
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
+                        NameClaimType = JwtRegisteredClaimNames.Sub,
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
                         ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
-                        ValidIssuer = jwtSettings.Issuer,
-                        ValidAudience = jwtSettings.Issuer,
+                        ValidateIssuerSigningKey = false,
                         IssuerSigningKey = new SymmetricSecurityKey(secretKey)
                     };
                 });
@@ -61,8 +63,6 @@ namespace SocialMediaBackend.API.Extensions
             services.AddSingleton<BlobServiceClient>(
                 new BlobServiceClient(storageSettings.ConnectionString)
             );
-
-
             services.AddScoped<IImageStorageService, BlobStorageService>();
 
             return services;
@@ -76,7 +76,7 @@ namespace SocialMediaBackend.API.Extensions
                 ConnectionMultiplexer.Connect(redisSettings.ConnectionString)
             );
 
-            services.AddScoped<CacheService>();
+            services.AddScoped<ICacheService, CacheService>();
 
             return services;
         }

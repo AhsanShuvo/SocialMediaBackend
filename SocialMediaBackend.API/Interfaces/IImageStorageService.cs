@@ -1,7 +1,10 @@
-﻿namespace SocialMediaBackend.API.Interfaces
+﻿using SocialMediaBackend.API.Models;
+
+namespace SocialMediaBackend.API.Interfaces
 {
     public interface IImageStorageService
     {
-        string GenerateUploadUrl(string fileName);
+        BlobUploadUrlResponse GenerateUploadUrl(string fileName);
+        Task DeleteBlobImagesAsync(string imageUrl);
     }
 }
