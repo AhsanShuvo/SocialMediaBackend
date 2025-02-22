@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SocialMediaBackend.API.Data;
 using SocialMediaBackend.API.Interfaces;
+using SocialMediaBackend.API.Models;
+using SocialMediaBackend.API.Models.Requests;
 
 namespace SocialMediaBackend.API.Services
 {
@@ -45,7 +47,7 @@ namespace SocialMediaBackend.API.Services
 
                 await Task.WhenAll(images.Select(image => _imageStorageService.DeleteBlobImagesAsync(image)));
 
-                await _cacheService.RemoveAsync("posts:");
+                await InvalidateCache(user);
 
                 _logger.LogInformation("Successfully deleted user with userId: {userId}", userId);
 
@@ -56,6 +58,44 @@ namespace SocialMediaBackend.API.Services
                 _logger.LogError(ex.Message, "Failed to delete user with userId: {userId}", userId);
                 throw;
             }
+        }
+
+        public async Task<bool> CreateUserAsync(UserCreateRequest request)
+        {
+            try
+            {
+                var user = new Account
+                {
+                    Id = request.UserId,
+                    Name = request.Name,
+                };
+
+                _context.Accounts.Add(user);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex.Message, "Failed to create a new user");
+                return false;
+            }
+        }
+
+        private async Task InvalidateCache(Account user)
+        {
+            var commentRemovalTask = user.Comments.Select(async comment =>
+            {
+                await _cacheService.DeleteCommentAsync(comment.PostId.ToString(), comment.Id.ToString());
+            });
+
+            await Task.WhenAll(commentRemovalTask);
+
+            var postRemovalTask = user.Posts.Select(async post =>
+            {
+                await _cacheService.DeletePostAsync(post.Id.ToString());
+            });
+
+            await Task.WhenAll(postRemovalTask);
         }
     }
 }

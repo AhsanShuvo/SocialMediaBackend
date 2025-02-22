@@ -35,6 +35,9 @@ namespace SocialMediaBackend.Functions
 
                 var processedBlobClient = processedContainerClient.GetBlobClient(fileNameWithoutExtension + ".jpg");
 
+                using var inputStream = await processedBlobClient.OpenReadAsync();
+                await using var outputStream = new MemoryStream();
+
                 using var image = await Image.LoadAsync(imageStream);
 
                 image.Mutate(x => x.Resize(new ResizeOptions
@@ -43,7 +46,6 @@ namespace SocialMediaBackend.Functions
                     Mode = ResizeMode.Stretch
                 }));
 
-                await using var outputStream = new MemoryStream();
                 await image.SaveAsync(outputStream, new JpegEncoder());
                 outputStream.Position = 0;
                 await processedBlobClient.UploadAsync(outputStream, new BlobHttpHeaders { ContentType = "image/jpeg" });

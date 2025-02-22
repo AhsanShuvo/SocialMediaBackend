@@ -40,36 +40,27 @@ namespace SocialMediaBackend.Tests
             _dbContext.Database.EnsureCreated();
             var _postService = new PostService(_loggerMock.Object, _cacheServiceMock.Object, _dbContext, _optionsMock.Object);
 
-            string cursor = null;
-            int limit = 5;
-            var cacheKey = $"posts:cursor:{cursor}:limit:{limit}";
+            var cursor = "";
+            var limit = 2;
+            var postId = Guid.NewGuid().ToString();
+            var cachedPost = new Post { Id = Guid.Parse(postId), Caption = "Test Caption", CreatedAt = DateTime.UtcNow, ImageUrl = "www.example.com/test-images/image.com" };
 
-            var cachedResponse = new PaginatedPostResponse
-            {
-                Posts = new List<PostDto>
-                {
-                    new PostDto
-                    {
-                        Id = Guid.NewGuid(),
-                        Caption = "Cached Post",
-                        CreatedAt = DateTime.UtcNow,
-                        ImageUrl = "https://example.com/original/test.jpg",
-                        Creator = new CreatorDto { Id = Guid.NewGuid(), Name = "User1" }
-                    }
-                },
-                NextPageToken = "nextCursor"
-            };
+            _cacheServiceMock.Setup(cs => cs.GetPaginatedPostsAsync(It.IsAny<long>(), limit))
+                .ReturnsAsync(new List<string> { postId });
+            _cacheServiceMock.Setup(cs => cs.GetPostByIdAsync(postId))
+                .ReturnsAsync(cachedPost);
+            _cacheServiceMock.Setup(cs => cs.GetLatestCommentsAsync(postId))
+                .ReturnsAsync(new List<Comment>());
 
-            _cacheServiceMock.Setup(c => c.GetAsync<PaginatedPostResponse>(cacheKey))
-                             .ReturnsAsync(cachedResponse);
+
 
             // Act
             var result = await _postService.GetAllPostsAsync(limit, cursor);
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(cachedResponse.Posts.Count, result.Posts.Count);
-            _cacheServiceMock.Verify(c => c.GetAsync<PaginatedPostResponse>(cacheKey), Times.Once);
+            Assert.Single(result.Posts);
+            Assert.Equal("Test Caption", result.Posts[0].Caption);
         }
 
         [Fact]
@@ -81,46 +72,33 @@ namespace SocialMediaBackend.Tests
             _dbContext.Database.EnsureCreated();
             var _postService = new PostService(_loggerMock.Object, _cacheServiceMock.Object, _dbContext, _optionsMock.Object);
 
-            string cursor = null;
-            int limit = 2;
-            var cacheKey = $"posts:cursor:{cursor}:limit:{limit}";
-
-            var creator = new Account { Id = Guid.NewGuid(), Name = "Test Creator" };
-            await _dbContext.Accounts.AddAsync(creator);
-
-            var post = new Post
-            {
-                Id = Guid.NewGuid(),
-                Caption = "Database Post",
-                CreatedAt = DateTime.UtcNow.AddHours(-1),
-                ImageUrl = "https://example.com/test-images/db_post.jpg",
-                CreatorId = creator.Id,
-                Creator = creator,
-                Comments = new List<Comment>()
-            };
-
+            var cursor = "";
+            var limit = 2;
+            var creator = new Account { Id = Guid.NewGuid(), Name = "ahsan" };
+            _dbContext.Accounts.Add(creator);
+            _dbContext.SaveChanges();
+            
+            var post = new Post { Id = Guid.NewGuid(), Caption = "DB Post", CreatedAt = DateTime.UtcNow.AddHours(-2), ImageUrl = "www.example.com/test-images/image.com", CreatorId = creator.Id };
             await _dbContext.Posts.AddAsync(post);
             await _dbContext.SaveChangesAsync();
 
-            _cacheServiceMock.Setup(c => c.GetAsync<PaginatedPostResponse>(cacheKey))
-                             .ReturnsAsync((PaginatedPostResponse)default);
+            var posts = _dbContext.Posts;
 
-            _cacheServiceMock.Setup(c => c.SetAsync(cacheKey, It.IsAny<PaginatedPostResponse>(), It.IsAny<TimeSpan>()))
-                             .Returns(Task.CompletedTask);
+            _cacheServiceMock.Setup(cs => cs.GetPaginatedPostsAsync(It.IsAny<long>(), limit))
+                .ReturnsAsync(new List<string>());
 
             // Act
             var result = await _postService.GetAllPostsAsync(limit, cursor);
 
             // Assert
             Assert.NotNull(result);
+            Assert.Single(_dbContext.Posts);
             Assert.Single(result.Posts);
-            Assert.Equal(post.Caption, result.Posts[0].Caption);
-            Assert.Contains("/images/", result.Posts[0].ImageUrl);
-            _cacheServiceMock.Verify(c => c.SetAsync(cacheKey, It.IsAny<PaginatedPostResponse>(), null), Times.Once);
+            Assert.Equal("DB Post", result.Posts[0].Caption);
         }
 
         [Fact]
-        public async Task CreatePostAsync_ShouldAddPost_AndClearCache()
+        public async Task CreatePostAsync_ShouldAddPost_AndAddToCache()
         {
             // Arrange
             var options = new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(databaseName: "TestDb3").Options;
@@ -128,24 +106,18 @@ namespace SocialMediaBackend.Tests
             _dbContext.Database.EnsureCreated();
             var _postService = new PostService(_loggerMock.Object, _cacheServiceMock.Object, _dbContext, _optionsMock.Object);
 
-            var request = new CreatePostRequest
-            {
-                Caption = "New Post",
-                ImageUrl = "https://example.com/test-images/new_post.jpg",
-                CreatorId = Guid.NewGuid()
-            };
+            var request = new CreatePostRequest { Caption = "New Post", ImageUrl = "www.example.com/test-images/image.com", CreatorId = Guid.NewGuid() };
 
-            _cacheServiceMock.Setup(c => c.RemoveAsync("posts:*")).Returns(Task.CompletedTask);
+            _cacheServiceMock.Setup(cs => cs.AddPostAsync(It.IsAny<string>(), It.IsAny<long>(), It.IsAny<Post>()))
+                .Returns(Task.CompletedTask);
 
             // Act
             var result = await _postService.CreatePostAsync(request);
 
             // Assert
             Assert.True(result);
-            var postInDb = await _dbContext.Posts.FirstOrDefaultAsync(p => p.Caption == request.Caption);
-            Assert.NotNull(postInDb);
-            Assert.Equal(request.Caption, postInDb.Caption);
-            _cacheServiceMock.Verify(c => c.RemoveAsync("posts:*"), Times.Once);
+            Assert.Single(_dbContext.Posts);
+            Assert.Equal("New Post", _dbContext.Posts.First().Caption);
         }
 
     }

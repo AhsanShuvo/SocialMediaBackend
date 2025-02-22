@@ -47,9 +47,16 @@ namespace SocialMediaBackend.API.Controllers.V1
             {
                 return Unauthorized("Unauthorized Creator Id");
             }
+            var response = await _postService.CreatePostAsync(request);
 
-            await _postService.CreatePostAsync(request);
-            return Ok(new { message = "post was created successfully."});
+            if (response)
+            {
+                return Ok(CreateResponse.Success("Successfully created a post."));
+            }
+            else
+            {
+                return StatusCode(500, CreateResponse.Failure("Failed to create a post."));
+            }
         }
 
         [HttpGet("upload-url")]

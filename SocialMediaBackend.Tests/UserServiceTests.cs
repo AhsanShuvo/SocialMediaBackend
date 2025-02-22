@@ -54,7 +54,9 @@ namespace SocialMediaBackend.Tests
             _imageStorageServiceMock.Setup(s => s.DeleteBlobImagesAsync(It.IsAny<string>()))
                 .Returns(Task.CompletedTask);
 
-            _cacheServiceMock.Setup(c => c.RemoveAsync("posts:"))
+            _cacheServiceMock.Setup(c => c.DeleteCommentAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(Task.CompletedTask);
+            _cacheServiceMock.Setup(c => c.DeletePostAsync(It.IsAny<string>()))
                 .Returns(Task.CompletedTask);
 
             // Act
@@ -68,7 +70,8 @@ namespace SocialMediaBackend.Tests
 
             _imageStorageServiceMock.Verify(s => s.DeleteBlobImagesAsync("https://example.com/test-images/image1.jpg"), Times.Once);
             _imageStorageServiceMock.Verify(s => s.DeleteBlobImagesAsync("https://example.com/test-images/image2.jpg"), Times.Once);
-            _cacheServiceMock.Verify(c => c.RemoveAsync("posts:"), Times.Once);
+            _cacheServiceMock.Verify(c => c.DeletePostAsync(It.IsAny<string>()), Times.Exactly(2));
+            _cacheServiceMock.Verify(c => c.DeleteCommentAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
         }
 
         [Fact]
@@ -88,7 +91,6 @@ namespace SocialMediaBackend.Tests
             // Assert
             Assert.False(result);
             _imageStorageServiceMock.Verify(s => s.DeleteBlobImagesAsync(It.IsAny<string>()), Times.Never);
-            _cacheServiceMock.Verify(c => c.RemoveAsync(It.IsAny<string>()), Times.Never);
         }
     }
 }

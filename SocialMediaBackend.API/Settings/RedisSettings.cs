@@ -3,6 +3,6 @@
     public class RedisSettings
     {
         public string ConnectionString { get; set; }
-        public int Cache_TTL { get; set; }
+        public int MaxSize { get; set; }
     }
 }

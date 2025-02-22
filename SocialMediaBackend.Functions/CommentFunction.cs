@@ -41,7 +41,7 @@ namespace SocialMediaBackend.Functions
                 _context.Comments.Add(comment);
                 await _context.SaveChangesAsync();
 
-                await _cacheService.RemoveAsync("posts:");
+                await _cacheService.AddCommentToPostAsync(comment.PostId.ToString(), comment.Id.ToString(), comment);
 
                 _logger.LogInformation($"Comment processed: {comment.Id}");
                 await messageActions.CompleteMessageAsync(message);

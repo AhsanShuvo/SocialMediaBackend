@@ -47,8 +47,7 @@ namespace SocialMediaBackend.Tests
             };
             var messageBody = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(comment));
             var message = ServiceBusModelFactory.ServiceBusReceivedMessage(body: BinaryData.FromBytes(messageBody));
-
-            _cacheServiceMock.Setup(c => c.RemoveAsync("posts:")).Returns(Task.CompletedTask);
+            _cacheServiceMock.Setup(c => c.AddCommentToPostAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Comment>())).Returns(Task.CompletedTask);
             _messageActionsMock.Setup(m => m.CompleteMessageAsync(message, default)).Returns(Task.CompletedTask);
 
             // Act
@@ -58,9 +57,8 @@ namespace SocialMediaBackend.Tests
             var commentInDb = await _dbContext.Comments.FirstOrDefaultAsync(c => c.Id == comment.Id);
             Assert.NotNull(commentInDb);
             Assert.Equal(comment.Content, commentInDb.Content);
-
-            _cacheServiceMock.Verify(c => c.RemoveAsync("posts:"), Times.Once);
             _messageActionsMock.Verify(m => m.CompleteMessageAsync(message, default), Times.Once);
+            _cacheServiceMock.Verify(c => c.AddCommentToPostAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Comment>()), Times.Once);
         }
 
         [Fact]
