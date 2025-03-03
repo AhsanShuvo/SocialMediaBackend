@@ -8,11 +8,12 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9862EFD7-A3E9-4947-80C5-5D6A81733B0D}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
+		.github\workflows\ci_pipeline.yml = .github\workflows\ci_pipeline.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocialMediaBackend.Functions", "SocialMediaBackend.Functions\SocialMediaBackend.Functions.csproj", "{41FA3EC9-B111-41B9-B6E3-05A2ED10E3B1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocialMediaBackend.Tests", "SocialMediaBackend.Tests\SocialMediaBackend.Tests.csproj", "{420FBD2C-F3FC-4263-9862-F5D03DBFDEE7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocialMediaBackend.Tests", "SocialMediaBackend.Tests\SocialMediaBackend.Tests.csproj", "{420FBD2C-F3FC-4263-9862-F5D03DBFDEE7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
