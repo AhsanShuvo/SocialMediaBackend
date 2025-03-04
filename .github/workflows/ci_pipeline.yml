@@ -39,7 +39,12 @@ jobs:
       - name: Restore dependencies (use cache if available)
         run: dotnet restore
       - name: Build
-        run: dotnet build --no-restore
+        run: dotnet build --no-restore --output bin/
+      - name: Upload Build Atrifacts
+        uses: actions/upload-artifact@v3
+        with:
+            name: build-output
+            path: bin/
 
   test:
     runs-on: ubuntu-latest
@@ -52,8 +57,10 @@ jobs:
           dotnet-version: 8.0.x
       - name: Restore dependencies (use cache if available)
         run: dotnet restore
-      - name: Build (ensure latest code is compiled)
-        run: dotnet build --no-restore
-      - name: Test
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-output
+          path: bin/
+      - name: Run Tests
         run: dotnet test --no-build --verbosity normal
-
