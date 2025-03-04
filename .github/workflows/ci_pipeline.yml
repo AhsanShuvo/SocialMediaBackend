@@ -43,9 +43,9 @@ jobs:
       - name: Build Azure Functions
         run: dotnet build SocialMediaBackend.Functions/SocialMediaBackend.Functions.csproj --no-restore --configuration Release
       - name: Verify API Build Output
-        run: ls -R API/bin/Release/net8.0/
+        run: ls -R SocialMediaBackend.API/bin/Release/net8.0/
       - name: Verify Functions Build Output
-        run: ls -R Functions/bin/Release/net8.0/
+        run: ls -R SocialMediaBackend.Functions/bin/Release/net8.0/
       - name: Upload API Build Atrifacts
         if: success()
         uses: actions/upload-artifact@v3
