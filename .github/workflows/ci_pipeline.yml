@@ -62,4 +62,4 @@ jobs:
             name: build-output
             path: bin/
         - name: Run Tests
-          run: dotnet test --no-build --verbosity normal
+          run: dotnet test {{ github.workspace }}/SocialMediaBackend/SocialMediaBackend/bin/SocialMediaBackend.Tests.dll --no-build --verbosity normal
