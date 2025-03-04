@@ -39,64 +39,27 @@ jobs:
       - name: Restore dependencies (use cache if available)
         run: dotnet restore
       - name: Build API
-        run: dotnet build SocialMediaBackend.API/SocialMediaBackend.API.csproj --no-restore --configuration Release
-      - name: Check build 
-        run: echo "build successfull"
-      - name: Build Azure Functions
-        run: dotnet build SocialMediaBackend.Functions/SocialMediaBackend.Functions.csproj --no-restore --configuration Release
-      - name: Build Test Project
-        run: dotnet build SocialMediaBackend.Tests/SocialMediaBackend.Tests.csproj --no-restore --configuration Debug
-      - name: Check API Build Output is Not Empty
-        run: |
-            if [ -z "$(ls -A SocialMediaBackend.API/bin/Release/net8.0/)" ]; then
-                echo "? API Build output is empty!"
-                exit 1
-            else
-                echo "? API Build output is not empty."
-            fi
-      - name: Upload API Build Atrifacts
-        if: success()
+        run: dotnet build --no-restore --output bin/
+      - name: Save build output
         uses: actions/upload-artifact@v4
         with:
-            name: api-build-output
-            path: ${{ github.workspace }}/SocialMediaBackend.API/bin/Release/net8.0/
-      - name: Upload Functions Build Artifacts
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: functions-build-output
-          path: ${{ github.workspace }}/SocialMediaBackend.Functions/bin/Release/net8.0/
-      - name: Upload Test build Artifacts
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-            name: test-build-output
-            path: ${{ github.workspace }}/SocialMediaBackend.Tests/bin/Debug/net8.0/
+            name: build-output
+            path: bin/
   test:
     runs-on: ubuntu-latest
-    needs: build  # This job runs only after build finishes
+    needs: build
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
-      - name: Restore dependencies (use cache if available)
-        run: dotnet restore
-      - name: Download API Build Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: api-build-output
-          path: ${{ github.workspace }}/SocialMediaBackend.API/bin/Release/net8.0/
-      - name: Download Functions Build Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: functions-build-output
-          path: ${{ github.workspace }}/SocialMediaBackend.Functions/bin/Release/net8.0/
-      - name: Download Test Build Artifacts
-        uses: actions/download-artifact@v4
-        with:
-            name: test-build-output
-            path: ${{ github.workspace }}/SocialMediaBackend.Tests/bin/Debug/net8.0/ 
-      - name: Run Tests
-        run: dotnet test --no-build --verbosity normal
+        - uses: actions/checkout@v4
+        - name: Setup .NET
+          uses: actions/setup-dotnet@v4
+          with:
+            dotnet-version: 8.0.x
+        - name: Restore dependencies (use cache if available)
+          run: dotnet restore
+        - name: Download Build Artifacts
+          uses: actions/download-artifact@v4
+          with:
+            name: build-output
+            path: bin/
+        - name: Run Tests
+          run: dotnet test bin/SocialMediaBackend.Tests.dll --no-build --verbosity normal
