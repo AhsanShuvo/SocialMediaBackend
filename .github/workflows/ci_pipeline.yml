@@ -40,6 +40,8 @@ jobs:
         run: dotnet restore
       - name: Build API
         run: dotnet build  SocialMediaBackend.API/SocialMediaBackend.API.csproj --no-restore --configuration Release
+      - name: Check build 
+        run: echo "build successfull"
       - name: Build Azure Functions
         run: dotnet build SocialMediaBackend.Functions/SocialMediaBackend.Functions.csproj --no-restore --configuration Release
       - name: Verify API Build Output
