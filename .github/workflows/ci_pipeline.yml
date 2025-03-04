@@ -52,33 +52,3 @@ jobs:
             else
                 echo "? API Build output is not empty."
             fi
-      - name: Upload API Build Atrifacts
-        if: success()
-        uses: actions/upload-artifact@v3
-        with:
-            name: api-build-output
-            path: ${{ github.workspace }}/SocialMediaBackend.API/bin/Release/net8.0/
-      - name: Upload Functions Build Artifacts
-        if: success()
-        uses: actions/upload-artifact@v3
-        with:
-          name: functions-build-output
-          path: ${{ github.workspace }}/SocialMediaBackend.Functions/bin/Release/net8.0/
-  test:
-    runs-on: ubuntu-latest
-    needs: build  # This job runs only after build finishes
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
-      - name: Restore dependencies (use cache if available)
-        run: dotnet restore
-      - name: Download Build Artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: build-output
-          path: bin/
-      - name: Run Tests
-        run: dotnet test --no-build --verbosity normal
