@@ -48,6 +48,12 @@ jobs:
         run: ls -R SocialMediaBackend.API/bin/Release/net8.0/
       - name: Verify Functions Build Output
         run: ls -R SocialMediaBackend.Functions/bin/Release/net8.0/
+      - name: Upload API Build Atrifacts
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+            name: api-build-output
+            path: SocialMediaBackend.API/bin/Release/net8.0/
   test:
     runs-on: ubuntu-latest
     needs: build  # This job runs only after build finishes
