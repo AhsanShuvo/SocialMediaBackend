@@ -39,7 +39,7 @@ jobs:
       - name: Restore dependencies (use cache if available)
         run: dotnet restore
       - name: Build API
-        run: dotnet build  SocialMediaBackend.API/SocialMediaBackend.API.csproj --no-restore --configuration Release
+        run: dotnet build SocialMediaBackend.API/SocialMediaBackend.API.csproj --no-restore --configuration Release
       - name: Check build 
         run: echo "build successfull"
       - name: Build Azure Functions
