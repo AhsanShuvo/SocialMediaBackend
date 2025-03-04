@@ -75,10 +75,15 @@ jobs:
           dotnet-version: 8.0.x
       - name: Restore dependencies (use cache if available)
         run: dotnet restore
-      - name: Download Build Artifacts
-        uses: actions/download-artifact@v3
+      - name: Download API Build Artifacts
+        uses: actions/download-artifact@v4
         with:
-          name: build-output
-          path: bin/
+          name: api-build-output
+          path: ${{ github.workspace }}/SocialMediaBackend.API/bin/Release/net8.0/
+      - name: Download Functions Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: functions-build-output
+          path: ${{ github.workspace }}/SocialMediaBackend.Functions/bin/Release/net8.0/
       - name: Run Tests
         run: dotnet test --no-build --verbosity normal
